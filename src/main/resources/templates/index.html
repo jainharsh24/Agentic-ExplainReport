@@ -1,0 +1,268 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Medical Report Analyzer</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" href="/css/style.css">
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Medical Report Analyzer</h1>
+
+    <div class="alert-banner" th:if="${redFlagActive}">
+        <h2>Critical Alert</h2>
+        <p class="alert-note">
+            Multiple critical values detected. This is not a diagnosis. Seek urgent medical care.
+        </p>
+        <div class="alert-grid">
+            <div>
+                <h4>Critical Findings</h4>
+                <ul>
+                    <li th:each="item : ${redFlagFindings}" th:text="${item}"></li>
+                </ul>
+            </div>
+            <div>
+                <h4>Immediate Instructions</h4>
+                <ul>
+                    <li th:each="item : ${redFlagInstructions}" th:text="${item}"></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Section -->
+    <div class="card upload-box">
+        <div class="report-types">
+            <span class="report-type">CBC</span>
+            <span class="report-type">KFT</span>
+            <span class="report-type">LFT</span>
+            <span class="report-type">Cardiac Panel</span>
+            <span class="report-type">Diabetes Panel</span>
+            <span class="report-type">Infection/Sepsis</span>
+        </div>
+        <h3>Upload Medical Report (PDF)</h3>
+        <form id="upload-form" action="/upload" method="post" enctype="multipart/form-data">
+            <input type="file" name="file" accept="application/pdf">
+            <br>
+            <button type="submit">Analyze Report</button>
+        </form>
+        <p class="error" th:if="${scanError}" th:text="${scanError}"></p>
+    </div>
+
+
+    <!-- Summary -->
+    <div class="card summary" th:if="${summary != null}">
+        <h3>Report Summary</h3>
+        <ul>
+            <li th:each="item : ${summary}" th:text="${item}"></li>
+        </ul>
+    </div>
+
+    <!-- Key Findings -->
+    <div class="card findings" th:if="${keyFindings != null}">
+        <h3>Key Findings</h3>
+        <ul>
+            <li th:each="item : ${keyFindings}" th:text="${item}"></li>
+        </ul>
+    </div>
+
+    <!-- Risk Flags -->
+    <div class="card risk" th:if="${riskFlags != null}">
+        <h3>Risk Flags</h3>
+        <ul>
+            <li th:each="item : ${riskFlags}" th:text="${item}"></li>
+        </ul>
+    </div>
+
+
+    <!-- Questions -->
+    <div class="card questions" th:if="${questions != null}">
+        <h3>Questions For Your Doctor</h3>
+        <ul>
+            <li th:each="item : ${questions}" th:text="${item}"></li>
+        </ul>
+    </div>
+
+    <!-- Next Steps -->
+    <div class="card next-steps" th:if="${nextSteps != null}">
+        <h3>Next Steps</h3>
+        <ul>
+            <li th:each="item : ${nextSteps}" th:text="${item}"></li>
+        </ul>
+    </div>
+
+    <!-- Report Q&A -->
+    <div class="card insights">
+        <h3>Report Q&amp;A</h3>
+        <p class="hint" th:if="${summary == null}">Upload a report to enable guided questions.</p>
+        <div class="insight-actions">
+            <button type="button" class="insight-btn" data-insight="risk_flags" th:disabled="${summary == null}">Explain Risk Flags</button>
+            <button type="button" class="insight-btn" data-insight="abnormal_values" th:disabled="${summary == null}">Abnormal Values</button>
+            <button type="button" class="insight-btn" data-insight="follow_up" th:disabled="${summary == null}">Follow-Up Checks</button>
+            <button type="button" class="insight-btn" data-insight="key_terms" th:disabled="${summary == null}">Explain Key Terms</button>
+        </div>
+        <div id="insight-title" class="insight-title"></div>
+        <p id="insight-error" class="error"></p>
+        <ul id="insight-results" class="insight-results"></ul>
+    </div>
+
+    <div class="action-bar" th:if="${summary != null}">
+        <form class="export-form" action="/export" method="post">
+            <button type="submit" name="format" value="pdf">Export PDF</button>
+            <button type="submit" name="format" value="txt" class="secondary">Export TXT</button>
+        </form>
+        <form class="clear-form" action="/clear" method="post">
+            <button type="submit" class="secondary">Clear Results</button>
+        </form>
+    </div>
+
+</div>
+
+<div id="undertaking-overlay" class="modal-overlay" aria-hidden="true">
+    <div class="modal">
+        <h3>Undertaking</h3>
+        <p>
+            This tool provides informational insights only and can be incomplete or incorrect.
+            You must consult a qualified doctor before making medical decisions.
+        </p>
+        <label class="modal-check">
+            <input id="undertaking-check" type="checkbox">
+            I agree and will consult a doctor.
+        </label>
+        <p id="undertaking-error" class="error"></p>
+        <div class="modal-actions">
+            <button id="undertaking-confirm" type="button">Agree and Continue</button>
+            <button id="undertaking-cancel" type="button" class="secondary">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(() => {
+    const buttons = Array.from(document.querySelectorAll('[data-insight]'));
+    if (buttons.length === 0) {
+        return;
+    }
+
+    const results = document.getElementById('insight-results');
+    const title = document.getElementById('insight-title');
+    const errorBox = document.getElementById('insight-error');
+
+    buttons.forEach((button) => {
+        button.dataset.locked = button.disabled ? 'true' : 'false';
+    });
+
+    const setLoading = (isLoading) => {
+        buttons.forEach((btn) => {
+            const isLocked = btn.dataset.locked === 'true';
+            btn.disabled = isLocked || isLoading;
+        });
+    };
+
+    const renderItems = (items) => {
+        results.innerHTML = '';
+        (items || []).forEach((text) => {
+            const li = document.createElement('li');
+            li.textContent = text;
+            results.appendChild(li);
+        });
+    };
+
+    buttons.forEach((button) => {
+        button.addEventListener('click', async () => {
+            if (button.disabled) {
+                return;
+            }
+            const type = button.getAttribute('data-insight');
+            errorBox.textContent = '';
+            title.textContent = '';
+            renderItems([]);
+            setLoading(true);
+
+            try {
+                const response = await fetch('/insight', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type })
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    const message = data && data.error ? data.error : 'Unable to load insights.';
+                    errorBox.textContent = message;
+                    return;
+                }
+
+                title.textContent = data.title || 'Insights';
+                renderItems(Array.isArray(data.items) ? data.items : []);
+            } catch (err) {
+                errorBox.textContent = 'Network error. Please try again.';
+            } finally {
+                setLoading(false);
+            }
+        });
+    });
+})();
+</script>
+
+<script>
+(() => {
+    const form = document.getElementById('upload-form');
+    if (!form) {
+        return;
+    }
+
+    const overlay = document.getElementById('undertaking-overlay');
+    const check = document.getElementById('undertaking-check');
+    const error = document.getElementById('undertaking-error');
+    const confirm = document.getElementById('undertaking-confirm');
+    const cancel = document.getElementById('undertaking-cancel');
+    let approved = false;
+
+    const showModal = () => {
+        overlay.classList.add('active');
+        overlay.setAttribute('aria-hidden', 'false');
+        error.textContent = '';
+    };
+
+    const hideModal = () => {
+        overlay.classList.remove('active');
+        overlay.setAttribute('aria-hidden', 'true');
+    };
+
+    form.addEventListener('submit', (event) => {
+        if (approved) {
+            approved = false;
+            return;
+        }
+        event.preventDefault();
+        showModal();
+    });
+
+    confirm.addEventListener('click', () => {
+        if (!check.checked) {
+            error.textContent = 'Please confirm before continuing.';
+            return;
+        }
+        approved = true;
+        hideModal();
+        form.submit();
+    });
+
+    cancel.addEventListener('click', () => {
+        hideModal();
+    });
+})();
+</script>
+
+<footer class="footer">
+    <h4>Pls Contact to Doctor before any Explaination from this web-site..</h4>
+    <p>HarshJain @CopyRight.....2026</p>
+</footer>
+
+</body>
+</html>
