@@ -30,3 +30,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Project Specifics
+Reports_Sample/
+"sources code/"
