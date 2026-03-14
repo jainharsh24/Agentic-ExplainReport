@@ -1,64 +1,126 @@
-# ExplainReport Agentic AI
+# ExplainReport – AI Medical Report Analyzer
 
-This project converts the PDF report analyzer into a simple Agentic AI workflow that uses tools to extract values, check ranges, detect risks, and generate a patient-friendly summary. The UI and upload flow remain unchanged.
+ExplainReport is a web application that helps users understand medical lab reports easily.
+Users can upload a **PDF medical report**, and the system extracts values, checks normal ranges, detects risks, and generates a simple explanation using AI.
 
-**Agent Architecture**
-This is a lightweight LangGraph-style workflow to keep the structure simple.
-1. Agent Controller (`AgentService`) orchestrates steps and maintains state.
-2. Planner (`AgentPlanner`) decides the next tool based on missing state.
-3. Tools (`ReadPdfTool`, `ExtractParametersTool`, `CheckNormalRangesTool`, `DetectHealthRiskTool`, `GenerateSummaryTool`) do the work.
-4. LLM Client (`GroqService`) powers risk explanations and summaries.
+The goal is to convert complex medical data into **clear insights for patients**.
 
-**Tool Definitions**
-- `read_pdf()` -> Extract text from the uploaded PDF.
-- `extract_parameters()` -> Identify medical parameters and values.
-- `check_normal_ranges()` -> Compare extracted values with predefined ranges.
-- `detect_health_risk()` -> Identify abnormal parameters and possible risks.
-- `generate_summary()` -> Produce a clear explanation for the user.
+---
 
-**Updated Backend Structure**
-- `dashboard/agent/AgentService.java` orchestrates the workflow.
-- `dashboard/agent/AgentPlanner.java` decides which tool runs next.
-- `dashboard/agent/tools/*` contains the five tool classes.
-- `dashboard/agent/model/*` contains parameter and range models.
-- `dashboard/service/GroqService.java` provides LLM calls.
-- `dashboard/controller/DashboardController.java` uses the agent pipeline while keeping UI endpoints unchanged.
+# Features
 
-**Example Workflow**
-1. Agent receives the PDF upload.
-2. `read_pdf()` extracts text.
-3. `extract_parameters()` finds lab values.
-4. `check_normal_ranges()` flags abnormal values.
-5. `detect_health_risk()` summarizes risks from abnormalities and red flags.
-6. `generate_summary()` produces summary, key findings, risk flags, questions, and next steps.
-7. Follow-up questions use the analyzed context from the agent state.
+* Upload medical report in **PDF format**
+* Automatic **parameter extraction** (Hemoglobin, WBC, Glucose, etc.)
+* **Normal range comparison**
+* Detect **abnormal values**
+* AI generated **summary of the report**
+* **Risk flag detection**
+* Suggested **questions for doctor**
+* **Next step recommendations**
+* Interactive **AI chat** to ask questions about the report
+* **Guided insights** explaining medical terms
+* Export analysis as **PDF or TXT**
+* **Privacy-first design** (no report stored)
 
-# Getting Started
+---
 
-### Reference Documentation
+# Application Screenshots
 
-For further reference, please consider the following sections:
+## Home Page
 
-* [Official Apache Maven documentation](https://maven.apache.org/guides/index.html)
-* [Spring Boot Maven Plugin Reference Guide](https://docs.spring.io/spring-boot/4.0.2/maven-plugin)
-* [Create an OCI image](https://docs.spring.io/spring-boot/4.0.2/maven-plugin/build-image.html)
-* [Spring Boot DevTools](https://docs.spring.io/spring-boot/4.0.2/reference/using/devtools.html)
-* [Thymeleaf](https://docs.spring.io/spring-boot/4.0.2/reference/web/servlet.html#web.servlet.spring-mvc.template-engines)
-* [Spring Web](https://docs.spring.io/spring-boot/4.0.2/reference/web/servlet.html)
 
-### Guides
+## Upload Medical Report
 
-The following guides illustrate how to use some features concretely:
+@ss
 
-* [Handling Form Submission](https://spring.io/guides/gs/handling-form-submission/)
-* [Building a RESTful Web Service](https://spring.io/guides/gs/rest-service/)
-* [Serving Web Content with Spring MVC](https://spring.io/guides/gs/serving-web-content/)
-* [Building REST services with Spring](https://spring.io/guides/tutorials/rest/)
+## AI Analysis Results
 
-### Maven Parent overrides
+@ss
 
-Due to Maven's design, elements are inherited from the parent POM to the project POM.
-While most of the inheritance is fine, it also inherits unwanted elements like `<license>` and `<developers>` from the
-parent.
-To prevent this, the project POM contains empty overrides for these elements.
-If you manually switch to a different parent and actually want the inheritance, you need to remove those overrides.
+## Risk Detection Section
+
+@ss
+
+## AI Chat Assistant
+
+@ss
+
+---
+
+# How It Works
+
+1. User uploads a **PDF medical report**
+2. System extracts text using **PDFBox**
+3. Parameters like **Hemoglobin, WBC, etc.** are detected
+4. Values are compared with **normal medical ranges**
+5. System identifies:
+
+   * Normal values
+   * Low values
+   * High values
+6. AI generates:
+
+   * Summary
+   * Key findings
+   * Risk flags
+   * Doctor questions
+   * Next steps
+7. User can ask questions using **AI chat**
+
+---
+
+# Installation Guide
+
+## Step 1 — Clone the Repository
+
+```bash
+git clone https://github.com/yourusername/explainreport.git
+```
+
+## Step 2 — Navigate to the Project
+
+```bash
+cd explainreport
+```
+
+## Step 3 — Configure Groq API Key
+
+Open:
+
+```
+src/main/resources/application.properties
+```
+
+Add your Groq API credentials:
+
+```
+groq.api.key=YOUR_API_KEY
+groq.api.url=https://api.groq.com/openai/v1/chat/completions
+```
+
+## Step 4 — Run the Application
+
+Using Maven:
+
+```bash
+mvn spring-boot:run
+```
+
+or
+
+```bash
+./mvnw spring-boot:run
+```
+
+## Step 5 — Open the Application
+
+Open in browser:
+
+```
+http://localhost:8080
+```
+
+
+
+
+
