@@ -24,31 +24,21 @@ The goal is to convert complex medical data into **clear insights for patients**
 
 ---
 
-# Application Screenshots
-
 ## Home Page
-
+![Home](ss/home.png)
 
 ## Upload Medical Report
-
-@ss
+![Upload](ss/upload.png)
 
 ## AI Analysis Results
-
-@ss
-
-## Risk Detection Section
-
-@ss
+![Results](ss/results.png)
 
 ## AI Chat Assistant
-
-@ss
+![Chat](ss/chat.png)
 
 ---
 
 # How It Works
-
 1. User uploads a **PDF medical report**
 2. System extracts text using **PDFBox**
 3. Parameters like **Hemoglobin, WBC, etc.** are detected
